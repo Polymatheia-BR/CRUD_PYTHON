@@ -1,60 +1,68 @@
 import mysql.connector
-import os
 
-limpar_tela = lambda: os.system('cls')
-conexao = mysql.connector.connect(user='root', password='302302', host='localhost', database='academia')
+conexao = mysql.connector.connect(user='root', password='302302', host='localhost', database='academiaturmac')
 cursor = conexao.cursor()
 
-#Retorna o id da entidade criada
-def inserir_dados():
-  valores = ['nome','CPF','telefone','endereco']
+def inserir_dados(query, valores):
   for i in range(len(valores)):
     valores[i] = input(f'Digite um valor para a coluna {valores[i]}:')
-  cursor.execute('INSERT INTO aluno (nome, CPF, telefone, endereco) VALUES (%s,%s,%s,%s)', tuple(valores))
+  cursor.execute(query, tuple(valores))
   conexao.commit()
-  print(f'O aluno com o ID {cursor.lastrowid} foi criado')
+  print(f'A entidade com o ID {cursor.lastrowid} foi criada')
 
-def mostrar_alunos():
-  print('TABELA ALUNO')
-  print(f'MATRICULA|{"NOME":<30}|{"CPF":<11}|{"TELEFONE":<11}|ENDEREÇO')
-  cursor.execute('SELECT * FROM aluno')
-  for (matricula, nome, CPF, telefone, endereco) in cursor:
-    print(f'{matricula:<9}|{nome:<30}|{CPF:<11}|{telefone:<11}|{endereco}')
+def mostrar_dados(tabela):
+    cursor.execute(f"SELECT * FROM {tabela}")
+    print(f'TABELA {tabela.upper()}')
+    colunas = cursor.column_names
+    for x in range(len(colunas)):
+        print(colunas[x].capitalize() + ' | ', end='')
+    print()
 
-def puxar_dados(matricula_query):
-  cursor.execute(f'SELECT * FROM aluno WHERE matricula = {matricula_query}')
-  return cursor.fetchall()[0]
+    dados = cursor.fetchall()
+    for linha in dados:
+        print(' | '.join([str(i) for i in linha]))
+    input()
 
-def atualizar_dados():
-  matricula = int(input('Digite a matricula de um Aluno: '))
-  aluno = puxar_dados(matricula)
-  nome = input('Digite o novo nome do aluno: ') or aluno[1]
-  CPF = input('Digite o novo CPF: ') or aluno[2]
-  telefone = input('Digite o novo telefone: ') or aluno[3]
-  endereco = input('Digite o novo endereço: ') or aluno[4]
-  cursor.execute('UPDATE aluno SET nome = %s, CPF = %s, telefone = %s, endereco = %s WHERE matricula = %s',(nome, CPF, telefone, endereco, matricula))
-  conexao.commit()
-
-def deletar_dados(matricula):
-  cursor.execute('DELETE FROM aluno WHERE matricula = %s', (matricula))
-  conexao.commit()
-  print(f'Aluno com matricula {matricula} deletado com exito.')
+def deletar_dados(query):
+    id = int(input('Digite a chave primaria da entidade que deseja deletar: '))
+    cursor.execute(query, id)
+    conexao.commit()
+    print(f'Entidade com o id {id} deletado!')
 
 while True:
-  menu = int(input(f'==========\n1 - Inserir Dados\n2 - Ler dados\n3 - Atualizar Dados\n4 - Deletar Dados\n5 - Sair\nSelecione uma opção: '))
-  limpar_tela()
-  match menu:
-    case 1:
-      inserir_dados()
-    case 2:
-      mostrar_alunos()
-    case 3:
-      mostrar_alunos()
-      atualizar_dados()
-    case 4:
-      mostrar_alunos()
-      deletar_dados(int(input('Digite a matricula do aluno: ')))
-    case 5:
-      break
+    tabela = int(input('==========\n1 - Aluno\n2 - Funcionario\n3 - Matriculado\n4 - Modalidade\nSelecione uma tabela:'))
+    match tabela:
+        case 1:
+            tabela = 'aluno'
+            query_insert = 'INSERT INTO aluno (nome, CPF, telefone, endereco) VALUES (%s,%s,%s,%s)'
+            query_delete = 'DELETE FROM aluno WHERE matricula = %s'
+            valores = ['nome', 'CPF', 'telefone', 'endereco']
+        case 2:
+            tabela = 'funcionario'
+            query_insert = 'INSERT INTO funcionario (nome, CPF, departamento, salario, email) VALUES (%s,%s,%s,%s,%s)'
+            query_delete = 'DELETE FROM funcionario WHERE id_funcionario = %s'
+            valores = ['nome', 'CPF', 'departamento', 'salario', 'email']
+        case 3:
+            tabela = 'matriculado'
+            query_insert = 'INSERT INTO matriculado (fk_matricula) VALUES (%s)'
+            query_delete = 'DELETE FROM matriculado WHERE id_matriculado = %s'
+            valores = ['fk_matricula']
+        case 4:
+            tabela = 'modalidade'
+            query_insert = 'INSERT INTO modalidade (nome, duracao) VALUES (%s,%s)'
+            query_delete = 'DELETE FROM modalidade WHERE ID = %s'
+            valores = ['nome','duracao']
+        case _:
+            print("Digite uma tabela valida!")
 
-conexao.close()
+    menu = int(input(f'==========\n1 - Inserir Dados\n2 - Ler dados\n3 - Deletar Dados\n4 - Sair\nSelecione uma opção: '))
+    match menu:
+        case 1:
+            inserir_dados(query_insert, valores)
+        case 2:
+            mostrar_dados(tabela)
+        case 3:
+            mostrar_dados(tabela)
+            deletar_dados(query_delete)
+        case _:
+            print('Opção invalida!')

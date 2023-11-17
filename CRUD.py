@@ -21,16 +21,15 @@ def mostrar_dados(tabela):
     dados = cursor.fetchall()
     for linha in dados:
         print(' | '.join([str(i) for i in linha]))
-    input()
 
 def deletar_dados(query):
     id = int(input('Digite a chave primaria da entidade que deseja deletar: '))
-    cursor.execute(query, id)
+    cursor.execute(query, (id,))
     conexao.commit()
     print(f'Entidade com o id {id} deletado!')
 
 while True:
-    tabela = int(input('==========\n1 - Aluno\n2 - Funcionario\n3 - Matriculado\n4 - Modalidade\nSelecione uma tabela:'))
+    tabela = int(input('==========\n1 - Aluno\n2 - Funcionario\n3 - Matriculado\n4 - Modalidade\n5 - Sair\nSelecione uma tabela: '))
     match tabela:
         case 1:
             tabela = 'aluno'
@@ -52,6 +51,8 @@ while True:
             query_insert = 'INSERT INTO modalidade (nome, duracao) VALUES (%s,%s)'
             query_delete = 'DELETE FROM modalidade WHERE ID = %s'
             valores = ['nome','duracao']
+        case 5:
+            break
         case _:
             print("Digite uma tabela valida!")
 
@@ -64,5 +65,7 @@ while True:
         case 3:
             mostrar_dados(tabela)
             deletar_dados(query_delete)
+        case 4:
+            break
         case _:
             print('Opção invalida!')
